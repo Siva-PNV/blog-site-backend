@@ -15,4 +15,5 @@ public class BlogsModal {
 	String article;
 	String authorName;
 	String creationTimeStamp;
+	String userName;
 }

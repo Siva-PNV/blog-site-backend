@@ -52,7 +52,7 @@ public class UserController {
 			 getUserDetails(userName);
 			 if(Authorization !=null && jwtTokenUtil.validateToken(Authorization, loginCredentials)) {
 				 try {
-						return new ResponseEntity<>(blogsService.createNewBlog(blogsModal,blogName), HttpStatus.CREATED);
+						return new ResponseEntity<>(blogsService.createNewBlog(blogsModal,blogName,userName), HttpStatus.CREATED);
 						}
 						catch(Exception e) {
 							return new ResponseEntity<>("Blogs could not saved", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -62,9 +62,9 @@ public class UserController {
 		}
 		
 		@DeleteMapping("/delete/{blogName}")
-		public ResponseEntity<?> deleteBlogName(@PathVariable String blogName,@RequestHeader String Authorization,@RequestHeader String userName) throws Exception {
+		public ResponseEntity<?> deleteBlogName(@PathVariable String blogName,@RequestHeader String authorization,@RequestHeader String userName) throws Exception {
 			 getUserDetails(userName);
-			 if(Authorization !=null && jwtTokenUtil.validateToken(Authorization, loginCredentials)) {
+			 if(authorization !=null && jwtTokenUtil.validateToken(authorization, loginCredentials)) {
 				 try {
 						if(!blogsService.isBlogAvailable(blogName)) {
 							return new ResponseEntity<>(blogsService.deleteBlog(blogName), HttpStatus.CREATED);
@@ -89,7 +89,16 @@ public class UserController {
 				return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		
+
+	@GetMapping("/get/{userName}")
+	public ResponseEntity<?> getMyBlogs(@PathVariable String userName){
+		try {
+			return new ResponseEntity<>( blogsService.getMyBlogs(userName), HttpStatus.OK);
+		}
+		catch(Exception e) {
+			return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	    @PostMapping("/register")
 	    public ResponseEntity<?> registerNewUser(@RequestBody Users users) {

@@ -35,12 +35,12 @@ public class BlogsController {
 	private final JwtTokenUtil jwtTokenUtil=new JwtTokenUtil();
 	
 	@GetMapping("info/{category}")
-	public ResponseEntity<?> getAllBlogsByCategory(@PathVariable String category,@RequestHeader String Authorization,@RequestHeader String userName) throws Exception{
-		 getUserDetails(userName);
-		  if(Authorization!=null && jwtTokenUtil.validateToken(Authorization, loginCredentials)  ){
+	public ResponseEntity<?> getAllBlogsByCategory(@PathVariable String category) throws Exception{
+//		 getUserDetails(userName);
+//		  if(Authorization!=null && jwtTokenUtil.validateToken(Authorization, loginCredentials)  ){
 				return new ResponseEntity<>(blogsService.getBlogsByCategory(category),HttpStatus.OK);
-		  }
-		return new ResponseEntity<>("Unauthorized",HttpStatus.UNAUTHORIZED);
+		  //}
+		//return new ResponseEntity<>("Unauthorized",HttpStatus.UNAUTHORIZED);
 	}
 	
 	@GetMapping("get/{category}/{durationFromRang}/{durationToRang}")
