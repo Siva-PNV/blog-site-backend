@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+import com.fse.exceptions.BlogsNotFoundException;
+import com.fse.exceptions.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,18 +20,23 @@ public class BlogsService {
 	@Autowired
 	private BlogsRepository blogsRepository;
 	
-	public BlogsModal createNewBlog(BlogsModal blogsModal,String blogName,String userName) {
-		BlogsModal blogsModalNew=new BlogsModal();
+	public BlogsModal createNewBlog(BlogsModal blogsModal,String blogName,String userName) throws Exception {
+		try {
+			BlogsModal blogsModalNew = new BlogsModal();
 			LocalDateTime myDateObj = LocalDateTime.now();
-	        DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-	        String formattedDate = myDateObj.format(myFormatObj);
+			DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+			String formattedDate = myDateObj.format(myFormatObj);
 			blogsModalNew.setBlogName(blogName);
 			blogsModalNew.setArticle(blogsModal.getArticle());
 			blogsModalNew.setAuthorName(blogsModal.getAuthorName());
 			blogsModalNew.setCategory(blogsModal.getCategory());
 			blogsModalNew.setCreationTimeStamp(formattedDate);
 			blogsModalNew.setUserName(userName);
+
 			return blogsRepository.save(blogsModalNew);
+		}catch (Exception e){
+			throw  new UserNotFoundException("User not found");
+		}
 	}
 	
 	public BlogsModal deleteBlog(String blogName) throws Exception {
@@ -37,14 +44,12 @@ public class BlogsService {
 		return blogsRepository.deleteByBlogName(blogName);
 		}
 		catch(Exception e) {
-			throw new Exception();
+			throw new BlogsNotFoundException("Blog not found");
 		}
 	}
 	
 	public boolean isBlogAvailable(String blogName) {
-		System.out.println("isBlogAvailable");
 		List<BlogsModal> blogModal=blogsRepository.findByBlogName(blogName);
-		System.out.println("blogModal.isEmpty() "+blogModal.isEmpty());
 		return blogModal.isEmpty();
 	}
 	
@@ -55,14 +60,13 @@ public class BlogsService {
 			return sortedBlogs;
 		}
 		catch(Exception e) {
-			throw new Exception();
+			throw new BlogsNotFoundException("Blogs not found");
 		}
 	}
 
 	public List<BlogsModal> getBlogsByCategory(String category) throws Exception {
 		List<BlogsModal> modals=blogsRepository.findAll();
-		System.out.print("all "+modals);
-		List<BlogsModal> filteredModals=new ArrayList<BlogsModal>();
+		List<BlogsModal> filteredModals=new ArrayList<>();
 		if(!modals.isEmpty()) {
 			for (BlogsModal blogsModal : modals) {
 				if(Objects.equals(blogsModal.getCategory(), category)) {
@@ -73,7 +77,7 @@ public class BlogsService {
 			return filteredModals;
 		}
 		else {
-			throw new Exception();
+			throw new BlogsNotFoundException("Blogs not found for category "+category);
 		}
 	}
 
@@ -105,7 +109,7 @@ public class BlogsService {
 			return filteredModals;
 		}
 		else {
-			throw new Exception();
+			throw new BlogsNotFoundException("Blogs not found for user "+userName);
 		}
 	}
 }

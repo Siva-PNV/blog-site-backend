@@ -2,11 +2,13 @@ package com.fse.controller;
 
 import java.util.Collection;
 
+import com.fse.services.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +32,14 @@ import com.fse.services.UsersService;
 @RequestMapping("/api/v1.0/blogsite/users")
 @CrossOrigin(origins = "http://localhost:4200")
 public class UserController {
+	private static final String SOMETHING_WENT_WRONG = "Something went wrong";
+	private static final String UNAUTHORIZED = "Unauthorized";
+	public static final String INVALID_CREDENTIALS = "Invalid credentials";
+	public static final String USER_NAME_ALREADY_EXIST_PLEASE_LOGIN = "User name already exist, please login";
+	public static final String BLOG_NAME_NOT_FOUND = "Blog name not found";
+	public static final String BLOGS_COULD_NOT_SAVED = "Blogs could not saved";
 
-	    @Autowired
+		@Autowired
 	    private JwtTokenUtil jwtTokenUtil;
 
 	    @Autowired
@@ -43,40 +51,46 @@ public class UserController {
 	    @Autowired
 	  	private BlogsService blogsService;
 
+		@Autowired
+		private Producer kafkaProducer;
+
 	    JwtResponse jwtResponse=new JwtResponse();
 	    
 	    UserDetails loginCredentials;
 			    	
 		@PostMapping("/blogs/add/{blogName}")
-		public ResponseEntity<?> registerNewBlog(@RequestHeader String Authorization, @RequestBody BlogsModal blogsModal,@PathVariable String blogName,@RequestHeader String userName) {
+		public ResponseEntity<?> addNewBlog(@RequestHeader String authorization, @RequestBody BlogsModal blogsModal,
+												 @PathVariable String blogName,@RequestHeader String userName) {
 			 getUserDetails(userName);
-			 if(Authorization !=null && jwtTokenUtil.validateToken(Authorization, loginCredentials)) {
+			 if(authorization !=null && jwtTokenUtil.validateToken(authorization, loginCredentials)) {
 				 try {
-						return new ResponseEntity<>(blogsService.createNewBlog(blogsModal,blogName,userName), HttpStatus.CREATED);
-						}
-						catch(Exception e) {
-							return new ResponseEntity<>("Blogs could not saved", HttpStatus.INTERNAL_SERVER_ERROR);
-						}	 
+					 //kafkaProducer.sendMessage(blogsModal);
+					 return new ResponseEntity<>(blogsService.createNewBlog(blogsModal,blogName,userName), HttpStatus.CREATED);
+				 }
+				 catch(Exception e) {
+					 return new ResponseEntity<>(BLOGS_COULD_NOT_SAVED, HttpStatus.INTERNAL_SERVER_ERROR);
+				 }
 			 }
-			return new ResponseEntity<>("un authorized", HttpStatus.UNAUTHORIZED);
+			 return new ResponseEntity<>(UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
 		}
 		
 		@DeleteMapping("/delete/{blogName}")
-		public ResponseEntity<?> deleteBlogName(@PathVariable String blogName,@RequestHeader String authorization,@RequestHeader String userName) throws Exception {
+		public ResponseEntity<?> deleteBlogName(@PathVariable String blogName,@RequestHeader String authorization,
+												@RequestHeader String userName) throws Exception {
 			 getUserDetails(userName);
 			 if(authorization !=null && jwtTokenUtil.validateToken(authorization, loginCredentials)) {
 				 try {
 						if(!blogsService.isBlogAvailable(blogName)) {
 							return new ResponseEntity<>(blogsService.deleteBlog(blogName), HttpStatus.CREATED);
 						}else {
-							return new ResponseEntity<>("Blog name not found", HttpStatus.NOT_FOUND);
+							return new ResponseEntity<>(BLOG_NAME_NOT_FOUND, HttpStatus.NOT_FOUND);
 						}
 						}
 						catch(Exception e) {
-							return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+							return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 						}
 			 }
-				return new ResponseEntity<>("un authorized", HttpStatus.UNAUTHORIZED);
+				return new ResponseEntity<>(UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
 			
 		}
 		
@@ -86,7 +100,7 @@ public class UserController {
 				return new ResponseEntity<>( blogsService.getAllBlogs(), HttpStatus.OK);
 			}
 			catch(Exception e) {
-				return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 
@@ -96,31 +110,37 @@ public class UserController {
 			return new ResponseEntity<>( blogsService.getMyBlogs(userName), HttpStatus.OK);
 		}
 		catch(Exception e) {
-			return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
 	    @PostMapping("/register")
 	    public ResponseEntity<?> registerNewUser(@RequestBody Users users) {
-			 
-	        if(!usersService.checkExistOrNot(users)){
-
-	            return new ResponseEntity<>(usersService.storeUserDetails(users), HttpStatus.CREATED);
-	        }
-	        return new ResponseEntity<>("User name already exist, please login",
-	                HttpStatus.CONFLICT);
+			try{
+				if (!usersService.checkExistOrNot(users)) {
+					return new ResponseEntity<>(usersService.storeUserDetails(users), HttpStatus.CREATED);
+				}
+				return new ResponseEntity<>(USER_NAME_ALREADY_EXIST_PLEASE_LOGIN,
+					HttpStatus.CONFLICT);
+			} catch (Exception e) {
+				return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 	    }
 
 	    @PostMapping("/login")
-	    public ResponseEntity<?> loginUser(@RequestBody LoginCredentials user) throws Exception {
-	        if (usersService.checkUser(user.getUserName(), user.getPassword())) {
-	            final UserDetails userDetails = userDetailsService
-	                    .loadUserByUsername(user.getUserName());
-	            final String token = jwtTokenUtil.generateToken(userDetails);
-	            jwtResponse.setJwttoken(token);
-	            return new ResponseEntity<>(usersService.getUser(user.getUserName(), user.getPassword()), HttpStatus.OK);
-	        }
-	        return new ResponseEntity<>("Invalid credentials", HttpStatus.BAD_REQUEST);
+	    public ResponseEntity<?> loginUser(@RequestBody LoginCredentials user) throws UsernameNotFoundException {
+			try {
+				if (usersService.checkUser(user.getUserName(), user.getPassword())) {
+					final UserDetails userDetails = userDetailsService
+							.loadUserByUsername(user.getUserName());
+					final String token = jwtTokenUtil.generateToken(userDetails);
+					jwtResponse.setJwttoken(token);
+					return new ResponseEntity<>(usersService.getUser(user.getUserName(), user.getPassword()), HttpStatus.OK);
+				}
+				return new ResponseEntity<>(INVALID_CREDENTIALS, HttpStatus.BAD_REQUEST);
+			} catch (Exception e) {
+				return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 	    }
 	    
 	    @GetMapping("/jwt/authentication")

@@ -20,7 +20,6 @@ public class JwtUserDetailsService implements UserDetailsService  {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // TODO Auto-generated method stub
         Users foundedUser = userRepository.findByUserName(username);
         if(foundedUser == null) return null;
         String name = foundedUser.getUserName();

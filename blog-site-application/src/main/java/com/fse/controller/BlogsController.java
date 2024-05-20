@@ -24,7 +24,8 @@ import com.fse.services.UsersService;
 @CrossOrigin(origins = "http://localhost:4200")
 public class BlogsController {
 
-	@Autowired
+    public static final String SOMETHING_WENT_WRONG = "Something went wrong";
+    @Autowired
 	BlogsService blogsService;
 	
 	@Autowired
@@ -36,63 +37,21 @@ public class BlogsController {
 	
 	@GetMapping("info/{category}")
 	public ResponseEntity<?> getAllBlogsByCategory(@PathVariable String category) throws Exception{
-//		 getUserDetails(userName);
-//		  if(Authorization!=null && jwtTokenUtil.validateToken(Authorization, loginCredentials)  ){
-				return new ResponseEntity<>(blogsService.getBlogsByCategory(category),HttpStatus.OK);
-		  //}
-		//return new ResponseEntity<>("Unauthorized",HttpStatus.UNAUTHORIZED);
+        try {
+            return new ResponseEntity<>(blogsService.getBlogsByCategory(category), HttpStatus.OK);
+        }catch (Exception e) {
+            return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
 	}
 	
 	@GetMapping("get/{category}/{durationFromRang}/{durationToRang}")
-	public ResponseEntity<?> getCategoriesRange(@PathVariable String category, @PathVariable String durationFromRang,@PathVariable String durationToRang) throws Exception{
-		return new ResponseEntity<>(blogsService.getAllBlogsCategoriesByRange(category,durationFromRang,durationToRang),HttpStatus.OK);
+	public ResponseEntity<?> getCategoriesRange(@PathVariable String category, @PathVariable String durationFromRang,
+                                                @PathVariable String durationToRang) throws Exception{
+		try {
+            return new ResponseEntity<>(blogsService.getAllBlogsCategoriesByRange(category, durationFromRang, durationToRang), HttpStatus.OK);
+        }catch (Exception e) {
+            return new ResponseEntity<>(SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 	}
-	
-	public Users getUserDetails(String userName) {
-        Users user=userService.getByUserName(userName);
-        loginCredentials = new UserDetails() {
-            /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			@Override
-            public Collection<? extends GrantedAuthority> getAuthorities() {
-                return null;
-            }
-
-            @Override
-            public String getPassword() {
-                return user.getPassword();
-            }
-
-            @Override
-            public String getUsername() {
-                return user.getUserName();
-            }
-
-            @Override
-            public boolean isAccountNonExpired() {
-                return false;
-            }
-
-            @Override
-            public boolean isAccountNonLocked() {
-                return false;
-            }
-
-            @Override
-            public boolean isCredentialsNonExpired() {
-                return false;
-            }
-
-            @Override
-            public boolean isEnabled() {
-                return false;
-            }
-        };
-        return user;
-    }
-	
-	
 }
