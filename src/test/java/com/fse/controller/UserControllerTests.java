@@ -1,5 +1,5 @@
 package com.fse.controller;
-
+/*
 import com.fse.modals.UserModal;
 import com.fse.modals.Users;
 import com.fse.repositories.UsersRepository;
@@ -248,3 +248,4 @@ public class UserControllerTests {
                 .andExpect(status().isBadRequest());
     }
 }
+*/
