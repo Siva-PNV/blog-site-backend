@@ -97,19 +97,24 @@ public class BlogsService {
 
 
 	public List<BlogsModal> getMyBlogs(String userName) throws Exception {
-		List<BlogsModal> modals=blogsRepository.findAll();
-		List<BlogsModal> filteredModals=new ArrayList<BlogsModal>();
-		if(!modals.isEmpty()) {
-			for (BlogsModal blogsModal : modals) {
-				if(Objects.equals(blogsModal.getUserName(), userName)) {
-					filteredModals.add(blogsModal);
+		try{
+			List<BlogsModal> modals=blogsRepository.findAll();
+			List<BlogsModal> filteredModals=new ArrayList<BlogsModal>();
+			if(!modals.isEmpty()) {
+				for (BlogsModal blogsModal : modals) {
+					if(Objects.equals(blogsModal.getUserName(), userName)) {
+						filteredModals.add(blogsModal);
+					}
 				}
+				filteredModals.sort(Comparator.comparing(BlogsModal::getCreationTimeStamp).reversed());
+				return filteredModals;
 			}
-			filteredModals.sort(Comparator.comparing(BlogsModal::getCreationTimeStamp).reversed());
-			return filteredModals;
+			else {
+				return filteredModals;
+			}
+		}catch (Exception e){
+			throw new Exception("Something went wrong");
 		}
-		else {
-			throw new BlogsNotFoundException("Blogs not found for user "+userName);
-		}
+
 	}
 }
