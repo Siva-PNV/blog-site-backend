@@ -21,7 +21,7 @@ import com.fse.services.UsersService;
 
 @RestController
 @RequestMapping("/api/v1.0/blogsite/blogs/")
-@CrossOrigin(origins = "https://blogs-site.azurewebsites.net")
+@CrossOrigin(origins = "https://blogs-site.azurewebsites.net/")
 public class BlogsController {
 
     public static final String SOMETHING_WENT_WRONG = "Something went wrong";
