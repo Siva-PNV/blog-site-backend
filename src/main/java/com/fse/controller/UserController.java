@@ -30,7 +30,7 @@ import com.fse.services.UsersService;
 
 @RestController
 @RequestMapping("/api/v1.0/blogsite/users")
-@CrossOrigin(origins = "https://blogs-site.azurewebsites.net/login")
+@CrossOrigin(origins = "https://blogs-site.azurewebsites.net")
 public class UserController {
 	private static final String SOMETHING_WENT_WRONG = "Something went wrong";
 	private static final String UNAUTHORIZED = "Unauthorized";
