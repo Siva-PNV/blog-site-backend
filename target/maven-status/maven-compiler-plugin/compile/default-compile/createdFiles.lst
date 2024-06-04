@@ -2,6 +2,7 @@ com/fse/configs/CorsFilter.class
 com/fse/repositories/UsersRepository.class
 com/fse/modals/BlogsModal.class
 com/fse/configs/SecurityConfiguration.class
+com/fse/BlogSiteApplication$1.class
 com/fse/modals/UserModal.class
 com/fse/auth/JwtRequestFilter.class
 com/fse/services/Producer.class
